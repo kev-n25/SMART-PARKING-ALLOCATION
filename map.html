@@ -164,33 +164,47 @@
     const baseColor = status === "Free" ? "green" : "red";
 
     const marker = L.circleMarker([lat, lng], {
-      radius: 7,
-      color: baseColor,
-      fillColor: baseColor,
-      fillOpacity: 1,
+  radius: 7,
+  color: baseColor,
+  fillColor: baseColor,
+  fillOpacity: 1,
 
-      // store data
-      cost,
-      crowding,
-      zone,
-      status,
-      spotId: i
-    }).addTo(map)
-      .bindPopup(`
-        <b>🚗 Parking Spot</b><br>
-        Zone: ${zone}<br>
-        Status: ${status}<br>
-        Cost: ₹${cost}<br>
-        Congestion: ${(crowding * 100).toFixed(0)}%
-      `);
+  // store data
+  cost,
+  crowding,
+  zone,
+  status,
+  spotId: i
+}).addTo(map);
 
-    parkingMarkers.push(marker);
+// 🔹 Popup content
+let popupContent = `
+  <b>🚗 Parking Spot</b><br>
+  Zone: ${zone}<br>
+  Status: ${status}<br>
+  Cost: ₹${cost}<br>
+  Congestion: ${(crowding * 100).toFixed(0)}%
+`;
+
+if (status === "Free") {
+  popupContent += `
+    <br><br>
+    <button onclick="bookSpot(${i})">🚗 Book</button>
+  `;
+}
+
+marker.bindPopup(popupContent);
+
+// store marker
+parkingMarkers.push(marker);
+
   }
 
   // 🔥 Nash will ONLY pick from FREE spots
   sendToNash();
 }
 function sendToNash() {
+
   // 🔥 ONLY FREE SPOTS GO TO NASH
   const freeMarkers = parkingMarkers.filter(
     m => m.options.status === "Free"
@@ -198,7 +212,16 @@ function sendToNash() {
 
   if (freeMarkers.length === 0) return;
 
-  // 🔑 SEND spotId TO BACKEND
+  // 🔁 RESET previous recommendations (important)
+  freeMarkers.forEach(m => {
+    m.setStyle({
+      color: "green",
+      fillColor: "green",
+      radius: 7
+    });
+  });
+
+  // 🔑 SEND DATA TO BACKEND
   const spotsData = freeMarkers.map(m => ({
     cost: m.options.cost,
     crowding: m.options.crowding,
@@ -213,27 +236,27 @@ function sendToNash() {
   .then(res => res.json())
   .then(result => {
 
-    result.forEach(spot => {
-      if (spot.is_optimal) {
+    // 🟡 EXACTLY ONE optimal spot (backend guarantees this)
+    const optimalSpot = result.find(s => s.is_optimal);
+    if (!optimalSpot) return;
 
-        // 🔐 SAFE MATCH USING spotId
-        const marker = freeMarkers.find(
-          m => m.options.spotId === spot.spotId
-        );
+    // 🔐 MATCH USING spotId
+    const marker = freeMarkers.find(
+      m => m.options.spotId === optimalSpot.spotId
+    );
 
-        if (!marker) return;
+    if (!marker) return;
 
-        marker.setStyle({
-          color: "yellow",
-          fillColor: "yellow",
-          radius: 10
-        });
-
-        marker.bindPopup(
-          "<b>⭐ Recommended Parking</b>"
-        ).openPopup();
-      }
+    // ⭐ HIGHLIGHT RECOMMENDED SPOT
+    marker.setStyle({
+      color: "yellow",
+      fillColor: "yellow",
+      radius: 10
     });
+
+    marker.bindPopup(
+      "<b>⭐ Recommended Parking</b><br>Low cost & low congestion"
+    ).openPopup();
   })
   .catch(err => console.error("Nash API error:", err));
 }
@@ -261,6 +284,85 @@ function sendToNash() {
       "Zone: " + best.zone
     ).openPopup();
   }
+  function bookSpot(spotId) {
+  const marker = parkingMarkers.find(
+    m => m.options.spotId === spotId
+  );
+
+  if (!marker) return;
+
+  // 1️⃣ Set to PENDING
+  marker.options.status = "Pending";
+
+  marker.setStyle({
+    color: "gray",
+    fillColor: "gray",
+    radius: 7
+  });
+
+  marker.bindPopup(
+    "<b>⏳ Processing booking...</b><br>Please wait"
+  ).openPopup();
+
+  // 2️⃣ Wait 3 seconds
+  setTimeout(() => {
+    marker.bindPopup(`
+      <b>Confirm Parking?</b><br><br>
+      <button onclick="confirmBooking(${spotId})">✅ Confirm</button>
+      &nbsp;
+      <button onclick="cancelBooking(${spotId})">❌ Cancel</button>
+    `).openPopup();
+  }, 3000);
+}
+function confirmBooking(spotId) {
+  const marker = parkingMarkers.find(
+    m => m.options.spotId === spotId
+  );
+
+  if (!marker) return;
+
+  marker.options.status = "Occupied";
+
+  marker.setStyle({
+    color: "red",
+    fillColor: "red",
+    radius: 7
+  });
+
+  marker.bindPopup(`
+    <b>🚗 Parking Confirmed</b><br>
+    Status: Booked
+  `).openPopup();
+
+  // 🔁 Re-run Nash
+  sendToNash();
+}
+
+function cancelBooking(spotId) {
+  const marker = parkingMarkers.find(
+    m => m.options.spotId === spotId
+  );
+
+  if (!marker) return;
+
+  marker.options.status = "Free";
+
+  marker.setStyle({
+    color: "green",
+    fillColor: "green",
+    radius: 7
+  });
+
+  marker.bindPopup(`
+    <b>🚗 Parking Spot</b><br>
+    Status: Free
+  `).openPopup();
+
+  // 🔁 Re-run Nash
+  sendToNash();
+}
+
+
 </script>
 
 </body>
