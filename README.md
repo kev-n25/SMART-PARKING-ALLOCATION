@@ -1,15 +1,13 @@
 # SMART-PARKING-ALLOCATION
-ParkEQ is a web-based smart parking application that helps drivers identify vacant parking spaces and reduces congestion by modeling real human behavior using mathematics and game theory.
+🚗 Smart Parking Allocation using Nash Equilibrium
 
-Instead of forcing drivers, ParkEQ shows how selfish parking decisions naturally settle into a stable state (Nash Equilibrium) and how smart incentives can improve overall efficiency.
-🗺️ Features
+This project presents a smart parking recommendation system that helps users identify optimal parking spots in urban areas. It uses an interactive map to display 
+parking availability near the user’s location and models parking decisions using game theory (Nash Equilibrium).
 
-🟢 View vacant and 🔴 occupied parking spaces on a live map
+Parking spots are generated along nearby roads and categorized into zones based on distance, congestion, and cost. Each spot is evaluated using a utility 
+function that balances price and congestion. The Nash equilibrium approach ensures a stable and optimal parking recommendation where no user benefits by unilaterally changing their choice.
 
-📍 Find the nearest vacant parking spot
+The system visually distinguishes parking states using intuitive color coding—red for occupied spots, green for free spots, and yellow for the recommended
+optimal spot. The backend is implemented using Python and Flask, while the frontend uses Leaflet.js and OpenStreetMap for real-time map interaction.
 
-🔁 Real-time simulation of parking availability
-
-📊 Congestion-aware decision making
-
-🧠 Math-driven behavior modeling (Game Theory)
+This project demonstrates the practical application of mathematical modeling and game theory in solving real-world urban mobility and parking challenges.
