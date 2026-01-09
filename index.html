@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ParkEQ – Smart Parking System</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(to right, #1d2671, #c33764);
+      color: white;
+      text-align: center;
+    }
+
+    .container {
+      padding: 80px 20px;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-weight: normal;
+      margin-bottom: 30px;
+      color: #f1f1f1;
+    }
+
+    .tagline {
+      font-size: 20px;
+      max-width: 700px;
+      margin: auto;
+      margin-bottom: 40px;
+      line-height: 1.5;
+    }
+
+    .features {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 50px;
+    }
+
+    .feature-box {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 20px;
+      width: 220px;
+      margin: 10px;
+    }
+
+    .feature-box h3 {
+      margin-bottom: 10px;
+    }
+
+    .buttons {
+      margin-top: 30px;
+    }
+
+    .btn {
+      background: white;
+      color: #333;
+      padding: 14px 30px;
+      font-size: 18px;
+      border-radius: 30px;
+      border: none;
+      margin: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      background: #f1f1f1;
+    }
+
+    footer {
+      margin-top: 80px;
+      font-size: 14px;
+      color: #ddd;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>🚗 ParkEQ</h1>
+    <h2>Smart Parking, Smarter Cities</h2>
+
+    <p class="tagline">
+  ParkEQ helps drivers find available parking spots in real time and
+  reduces congestion by modeling selfish driver behavior using
+  <b>Nash Equilibrium</b> from game theory.
+</p>
+
+
+    <div class="features">
+      <div class="feature-box">
+        <h3>🗺️ Live Map</h3>
+        <p>View vacant and occupied parking spaces on a city map.</p>
+      </div>
+
+      <div class="feature-box">
+        <h3>📊 Smart Decisions</h3>
+        <p>Drivers choose parking based on cost, distance, and congestion.</p>
+      </div>
+
+      <div class="feature-box">
+        <h3>🧠 Math Powered</h3>
+        <p>Uses Nash Equilibrium to model real human behavior.</p>
+      </div>
+
+      <div class="feature-box">
+        <h3>🌱 Less Traffic</h3>
+        <p>Reduces congestion, fuel waste, and emissions.</p>
+      </div>
+    </div>
+
+    <div class="buttons">
+       <a href="map.html?mode=nash" class="btn">Start Parking (Nash Model)</a>
+       <a href="#how" class="btn">How It Works</a>
+    </div>
+
+
+    <footer>
+      Built for Hackathon | Smart City & Sustainable Mobility
+    </footer>
+  </div>
+
+</body>
+</html>

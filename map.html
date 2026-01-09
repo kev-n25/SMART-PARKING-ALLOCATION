@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Parking – Zone-Based Congestion</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Geocoder -->
+  <link rel="stylesheet"
+    href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <script
+    src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <style>
+    body { margin: 0; font-family: Arial; }
+    #map { height: 100vh; width: 100%; }
+
+    .control-box {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: white;
+      padding: 10px;
+      z-index: 1000;
+      border-radius: 6px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="control-box">
+  <b>🚗 Smart Parking</b><br><br>
+  <button onclick="locateUser()">📍 My Location</button>
+</div>
+
+<div id="map"></div>
+
+<script>
+  // ---------------- MAP INIT ----------------
+  const map = L.map("map").setView([20, 0], 2);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors"
+  }).addTo(map);
+
+  // 🔍 SEARCH BAR
+  const geocoder = L.Control.geocoder({
+    defaultMarkGeocode: false
+  })
+  .on("markgeocode", e => {
+    const c = e.geocode.center;
+    map.setView(c, 16);
+    fetchRoadsAndPlaceParking(c.lat, c.lng);
+  })
+  .addTo(map);
+
+  let userMarker = null;
+  let parkingMarkers = [];
+
+  // ---------------- ZONE CONGESTION (NASH OUTPUT) ----------------
+  const zoneCongestion = {
+    A: 0.85, // very congested
+    B: 0.55,
+    C: 0.25  // mostly free
+  };
+
+  // ---------------- USER LOCATION ----------------
+  function locateUser() {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      map.setView([lat, lng], 16);
+
+      if (userMarker) map.removeLayer(userMarker);
+
+      userMarker = L.circleMarker([lat, lng], {
+        radius: 8,
+        color: "blue",
+        fillColor: "blue",
+        fillOpacity: 1
+      }).addTo(map)
+        .bindPopup("📍 You are here")
+        .openPopup();
+
+      fetchRoadsAndPlaceParking(lat, lng);
+    });
+  }
+
+  // ---------------- FETCH ROADS ----------------
+  async function fetchRoadsAndPlaceParking(lat, lng) {
+    parkingMarkers.forEach(m => map.removeLayer(m));
+    parkingMarkers = [];
+
+    const radius = 500;
+
+    const query = `
+      [out:json];
+      way (around:${radius}, ${lat}, ${lng}) ["highway"];
+      out geom;
+    `;
+
+    const url =
+      "https://overpass-api.de/api/interpreter?data=" +
+      encodeURIComponent(query);
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    const roadPoints = [];
+
+    data.elements.forEach(w => {
+      if (w.geometry) {
+        w.geometry.forEach(p => {
+          roadPoints.push([p.lat, p.lon]);
+        });
+      }
+    });
+
+    generateParking(roadPoints, lat, lng);
+  }
+
+  // ---------------- ZONE ASSIGNMENT ----------------
+  function getZone(distance) {
+    if (distance < 150) return "A";
+    if (distance < 300) return "B";
+    return "C";
+  }
+
+  // ---------------- PARKING GENERATION ----------------
+ function generateParking(roadPoints, centerLat, centerLng) {
+
+  parkingMarkers.forEach(m => map.removeLayer(m));
+  parkingMarkers = [];
+
+  const spots = 35;
+
+  for (let i = 0; i < spots; i++) {
+    const p = roadPoints[Math.floor(Math.random() * roadPoints.length)];
+
+    const lat = p[0] + (Math.random() - 0.5) * 0.00004;
+    const lng = p[1] + (Math.random() - 0.5) * 0.00004;
+
+    const dist = Math.sqrt(
+      Math.pow((lat - centerLat) * 111000, 2) +
+      Math.pow((lng - centerLng) * 111000, 2)
+    );
+
+    const zone = getZone(dist);
+
+    const cost = zone === "A" ? 50 : zone === "B" ? 30 : 15;
+    const crowding = zoneCongestion[zone];
+
+    // ✅ AVAILABILITY (CRITICAL)
+    const status = Math.random() > crowding ? "Free" : "Occupied";
+
+    // 🔴🟢 BASE COLOR
+    const baseColor = status === "Free" ? "green" : "red";
+
+    const marker = L.circleMarker([lat, lng], {
+      radius: 7,
+      color: baseColor,
+      fillColor: baseColor,
+      fillOpacity: 1,
+
+      // store data
+      cost,
+      crowding,
+      zone,
+      status,
+      spotId: i
+    }).addTo(map)
+      .bindPopup(`
+        <b>🚗 Parking Spot</b><br>
+        Zone: ${zone}<br>
+        Status: ${status}<br>
+        Cost: ₹${cost}<br>
+        Congestion: ${(crowding * 100).toFixed(0)}%
+      `);
+
+    parkingMarkers.push(marker);
+  }
+
+  // 🔥 Nash will ONLY pick from FREE spots
+  sendToNash();
+}
+function sendToNash() {
+  // 🔥 ONLY FREE SPOTS GO TO NASH
+  const freeMarkers = parkingMarkers.filter(
+    m => m.options.status === "Free"
+  );
+
+  if (freeMarkers.length === 0) return;
+
+  // 🔑 SEND spotId TO BACKEND
+  const spotsData = freeMarkers.map(m => ({
+    cost: m.options.cost,
+    crowding: m.options.crowding,
+    spotId: m.options.spotId
+  }));
+
+  fetch("http://127.0.0.1:5000/nash", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ spots: spotsData })
+  })
+  .then(res => res.json())
+  .then(result => {
+
+    result.forEach(spot => {
+      if (spot.is_optimal) {
+
+        // 🔐 SAFE MATCH USING spotId
+        const marker = freeMarkers.find(
+          m => m.options.spotId === spot.spotId
+        );
+
+        if (!marker) return;
+
+        marker.setStyle({
+          color: "yellow",
+          fillColor: "yellow",
+          radius: 10
+        });
+
+        marker.bindPopup(
+          "<b>⭐ Recommended Parking</b>"
+        ).openPopup();
+      }
+    });
+  })
+  .catch(err => console.error("Nash API error:", err));
+}
+
+  // ---------------- RECOMMENDED PARKING ----------------
+  function recommendSpot(spots, lat, lng) {
+    if (spots.length === 0) return;
+
+    const zonePriority = { A: 1, B: 2, C: 3 };
+
+    spots.sort((a, b) =>
+      zonePriority[a.zone] - zonePriority[b.zone]
+    );
+
+    const best = spots[0];
+
+    best.setStyle({
+      color: "gold",
+      fillColor: "gold",
+      radius: 10
+    });
+
+    best.bindPopup(
+      "<b>⭐ Recommended Parking</b><br>" +
+      "Zone: " + best.zone
+    ).openPopup();
+  }
+</script>
+
+</body>
+</html>
