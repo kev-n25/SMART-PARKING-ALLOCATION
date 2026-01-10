@@ -1,13 +1,35 @@
 # SMART-PARKING-ALLOCATION
-🚗 Smart Parking Allocation using Nash Equilibrium
 
-This project presents a smart parking recommendation system that helps users identify optimal parking spots in urban areas. It uses an interactive map to display 
-parking availability near the user’s location and models parking decisions using game theory (Nash Equilibrium).
+Team Name: Kernel Panic
 
-Parking spots are generated along nearby roads and categorized into zones based on distance, congestion, and cost. Each spot is evaluated using a utility 
-function that balances price and congestion. The Nash equilibrium approach ensures a stable and optimal parking recommendation where no user benefits by unilaterally changing their choice.
+Team Members:
+    Team Lead: Athira K V - TKM College Of Engineering
+    Member 2: Abhishek Biju - TKM College Of Engineering
+    Member 3: Kevin Reji - TKM College Of Engineering
 
-The system visually distinguishes parking states using intuitive color coding—red for occupied spots, green for free spots, and yellow for the recommended
-optimal spot. The backend is implemented using Python and Flask, while the frontend uses Leaflet.js and OpenStreetMap for real-time map interaction.
+Project Description:
+    Our project models real life urban parking as strategic problem and uses the math model Nash Equilibrium to minimize congestion and travel cost. The system provides real-time, location-based parking recommendations through an interactive map interface.
 
-This project demonstrates the practical application of mathematical modeling and game theory in solving real-world urban mobility and parking challenges.
+The Concept:
+    The project models urban parking as a strategic decision-making problem using game theory.Each driver is treated as a player who chooses a parking slot to minimize personal cost.A cost function is defined based on distance and congestion at each parking location.Nash equilibrium is used to recommend parking slots where no user benefits by switching alone.This prevents overcrowding of nearby slots and distributes vehicles more efficiently.Real-time location data and spatial distance calculations support dynamic recommendations.The approach demonstrates how mathematical modeling can solve real-world urban challenges.
+
+Technical Details:
+    Technologies Used:
+        Languages: Python,HTML,JavaScript
+        Frameworks: Flask,LeafLet,OpenStreetMap
+        Libraries/Assets: Flask,random,math,json,Leaflet.js,OpenStreetMap API
+        Tools: Git,GitHub,VSCode,Flask Development Server
+        
+Implementation:
+    Installation/Setup:
+        git clone https://github.com/kev-n25/SMART-PARKING-ALLOCATION.git
+
+Project Documentation:
+    Screenshots:
+        Screenshot1:
+        Screenshot2:
+        Screenshot3:
+    Project Demo:
+        Project Video:
+    Deployment:
+        Deployed Version: 
